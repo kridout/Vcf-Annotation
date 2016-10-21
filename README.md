@@ -12,6 +12,6 @@ COSMIC - CosmicCodingMuts.vcf
 
 ## Run
 
-HICF2_cancer_somatic_annotation.sh [input snv vcf] [input indel vcf] [vcf folder] [basename/casename]
+HICF2_cancer_somatic_annotation.sh [input snv vcf] [input indel vcf] [vcf folder] [basename/casename] [folder of databases to overlap (bed)]
 
    

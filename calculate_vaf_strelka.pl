@@ -34,148 +34,146 @@ open(IN, '<', $inputvcf) or die "Could not open input\n";
   open(OUT, '>', $outputvcf) or die "Could not open output\n";;
 
   while(my $line=<IN>){ #move through the file one line at a time
-  	chomp($line);
+     chomp($line);
      @normals=();
      @tumours=();
      %format_normal_snvs=();
      %format_tumour_snvs=();
-      @formatnames=();
-  	if($line=~m/^##.*/){
-print OUT "$line\n";
-  	}
-  	else {
+     @formatnames=();
+     
+     if($line=~m/^##.*/){
+	 print OUT "$line\n";
+     }else {
   	if($line=~m/^#CHROM/){
   		print OUT "$line";
   		print OUT "\tQSS\tVAF_normal\tVAF_tumour\n";
   	}else {
+	    $vaf_normal=0;
+	    $vaf_tumour=0;
+	    $QSS=0;
 
-  	$vaf_normal=0;
-  	$vaf_tumour=0;
-  	$QSS=0;
+	    @normals=();
+	    @tumours=();
+	    my @columns=split ("\t", $line); #split the line at the tabs
+	    my $ref=$columns[3];
+	    my $alt=$columns[4];
+	    my $info_qss=$columns[7];
+	    my $format=$columns[8];
+	    my $info1=$columns[9];
+	    my $info2=$columns[10];
 
-  	@normals=();
-  	@tumours=();
-	my @columns=split ("\t", $line); #split the line at the tabs
-  my $ref=$columns[3];
-    my $alt=$columns[4];
-    my $info_qss=$columns[7];
-    my $format=$columns[8];
-    my $info1=$columns[9];
-    my $info2=$columns[10];
+	    @normals=split(":",$info1);
+	    @tumours=split(":",$info2);
 
-	 @normals=split(":",$info1);
-     @tumours=split(":",$info2);
-
-    if ($info_qss=~m/QSS\=(\d+)(.*)/){
- 	$QSS=$1;
-    }
-    if ($info_qss=~m/QSI\=(\d+)(.*)/){
-  $QSS=$1;
-    }
-    #DP- 0
-    #A - 4
-    #C - 5
-    #G - 6
-    #T - 7
-    @formatnames=split(":",$format);
-@format_normal_snvs{@formatnames} = @normals;
-@format_tumour_snvs{@formatnames}=@tumours;
+	    if ($info_qss=~m/QSS\=(\d+)(.*)/){
+		$QSS=$1;
+	    }
+	    if ($info_qss=~m/QSI\=(\d+)(.*)/){
+		$QSS=$1;
+	    }
+	    #DP- 0
+	    #A - 4
+	    #C - 5
+	    #G - 6
+	    #T - 7
+	    @formatnames=split(":",$format);
+	    @format_normal_snvs{@formatnames} = @normals;
+	    @format_tumour_snvs{@formatnames}=@tumours;
 
 
-    $DPnorm=$format_normal_snvs{"DP"};
-    $DPtumour=$format_tumour_snvs{"DP"};
-    #36: 0:0: 0: 0,1: 0,0: 36,36: 0,0
-    #141:0:0:0:13,16:0,0:128,137:0,0
-    #vaf for normals
-    if ($alt eq "A"){
-    $altdepth1=$format_normal_snvs{"AU"};
-    my @alt1=split(",",$altdepth1);
-    $altdepth=(sort { $a <=> $b } @alt1)[0];
-    $altdepth2=$format_tumour_snvs{"AU"};
-    my @alt2=split(",",$altdepth2);
-    $altdepth3=(sort { $a <=> $b } @alt2)[0];
+	    $DPnorm=$format_normal_snvs{"DP"};
+	    $DPtumour=$format_tumour_snvs{"DP"};
+	    #36: 0:0: 0: 0,1: 0,0: 36,36: 0,0
+	    #141:0:0:0:13,16:0,0:128,137:0,0
+	    #vaf for normals
+	    if ($alt eq "A"){
+		$altdepth1=$format_normal_snvs{"AU"};
+		my @alt1=split(",",$altdepth1);
+		$altdepth=(sort { $a <=> $b } @alt1)[0];
+		$altdepth2=$format_tumour_snvs{"AU"};
+		my @alt2=split(",",$altdepth2);
+		$altdepth3=(sort { $a <=> $b } @alt2)[0];
 
-    if($DPnorm !=0){
-    $vaf_normal=$altdepth/$DPnorm;
-    }
-    if($DPtumour !=0){
-$vaf_tumour=$altdepth3/$DPtumour;
-    }
-    }
-    ############
-      if ($alt eq "C"){
-    $altdepth1=$format_normal_snvs{"CU"};
-    my @alt1=split(",",$altdepth1);
-    $altdepth=(sort { $a <=> $b } @alt1)[0];
-    $altdepth2=$format_tumour_snvs{"CU"};
-    my @alt2=split(",",$altdepth2);
-    $altdepth3=(sort { $a <=> $b } @alt2)[0];
+		if($DPnorm !=0){
+		    $vaf_normal=$altdepth/$DPnorm;
+		}
+		if($DPtumour !=0){
+		    $vaf_tumour=$altdepth3/$DPtumour;
+		}
+	    }
+	    ############
+	    if ($alt eq "C"){
+		$altdepth1=$format_normal_snvs{"CU"};
+		my @alt1=split(",",$altdepth1);
+		$altdepth=(sort { $a <=> $b } @alt1)[0];
+		$altdepth2=$format_tumour_snvs{"CU"};
+		my @alt2=split(",",$altdepth2);
+		$altdepth3=(sort { $a <=> $b } @alt2)[0];
+		
+		if($DPnorm !=0){
+		    $vaf_normal=$altdepth/$DPnorm;
+		}
+		if($DPtumour !=0){
+		    $vaf_tumour=$altdepth3/$DPtumour;
+		}
+	    }
+	    
+	    ############
+	    if ($alt eq "G"){
+		$altdepth1=$format_normal_snvs{"GU"};
+		my @alt1=split(",",$altdepth1);
+		$altdepth=(sort { $a <=> $b } @alt1)[0];
+		$altdepth2=$format_tumour_snvs{"GU"};
+		my @alt2=split(",",$altdepth2);
+		$altdepth3=(sort { $a <=> $b } @alt2)[0];
+		
+		if($DPnorm !=0){
+		    $vaf_normal=$altdepth/$DPnorm;
+		}
+		if($DPtumour !=0){
+		    $vaf_tumour=$altdepth3/$DPtumour;
+		}
+	    }
+	    ############
+	    if ($alt eq "T"){
+		$altdepth1=$format_normal_snvs{"TU"};
+		my @alt1=split(",",$altdepth1);
+		$altdepth=(sort { $a <=> $b } @alt1)[0];
+		$altdepth2=$format_tumour_snvs{"TU"};
+		my @alt2=split(",",$altdepth2);
+		$altdepth3=(sort { $a <=> $b } @alt2)[0];
+		
+		if($DPnorm !=0){
+		    $vaf_normal=$altdepth/$DPnorm;
+		}
+		if($DPtumour !=0){
+		    $vaf_tumour=$altdepth3/$DPtumour;
+		}
+	    }
+	    ################
+	    if (length($alt) > 1 || length($ref) >1 ) {
+		$altdepth1=$format_normal_snvs{"TAR"};
+		#  print "$altdepth1\n";
+		my @alt1=split(",",$altdepth1);
+		$altdepth=(sort { $a <=> $b } @alt1)[0];
+		$altdepth2=$format_tumour_snvs{"TAR"};
+		my @alt2=split(",",$altdepth2);
+		$altdepth3=(sort { $a <=> $b } @alt2)[0];
+		
+		if($DPnorm !=0){
+		    $vaf_normal=$altdepth/$DPnorm;
+		}
+		if($DPtumour !=0){
+		    $vaf_tumour=$altdepth3/$DPtumour;
+		}
+	    }
 
-    if($DPnorm !=0){
-    $vaf_normal=$altdepth/$DPnorm;
-    }
-    if($DPtumour !=0){
-$vaf_tumour=$altdepth3/$DPtumour;
-    }
-    }
-
-     ############
-      if ($alt eq "G"){
-    $altdepth1=$format_normal_snvs{"GU"};
-    my @alt1=split(",",$altdepth1);
-    $altdepth=(sort { $a <=> $b } @alt1)[0];
-    $altdepth2=$format_tumour_snvs{"GU"};
-    my @alt2=split(",",$altdepth2);
-    $altdepth3=(sort { $a <=> $b } @alt2)[0];
-
-    if($DPnorm !=0){
-    $vaf_normal=$altdepth/$DPnorm;
-    }
-    if($DPtumour !=0){
-$vaf_tumour=$altdepth3/$DPtumour;
-    }
-    }
-     ############
-      if ($alt eq "T"){
-    $altdepth1=$format_normal_snvs{"TU"};
-    my @alt1=split(",",$altdepth1);
-    $altdepth=(sort { $a <=> $b } @alt1)[0];
-    $altdepth2=$format_tumour_snvs{"TU"};
-    my @alt2=split(",",$altdepth2);
-    $altdepth3=(sort { $a <=> $b } @alt2)[0];
-
-    if($DPnorm !=0){
-    $vaf_normal=$altdepth/$DPnorm;
-    }
-    if($DPtumour !=0){
-$vaf_tumour=$altdepth3/$DPtumour;
-    }
-  }
-    ################
-    if (length($alt) > 1 || length($ref) >1 ) {
-    $altdepth1=$format_normal_snvs{"TAR"};
-  #  print "$altdepth1\n";
-    my @alt1=split(",",$altdepth1);
-    $altdepth=(sort { $a <=> $b } @alt1)[0];
-    $altdepth2=$format_tumour_snvs{"TAR"};
-    my @alt2=split(",",$altdepth2);
-    $altdepth3=(sort { $a <=> $b } @alt2)[0];
-
-    if($DPnorm !=0){
-    $vaf_normal=$altdepth/$DPnorm;
-    }
-    if($DPtumour !=0){
-$vaf_tumour=$altdepth3/$DPtumour;
-    }
-}
-
-  #  $vaf=$vaf*100;
-	print OUT "$line\t";
-print OUT "$QSS\t$vaf_normal\t$vaf_tumour\n";
-	#expand the cancer field
-}
-}
-
+	    #  $vaf=$vaf*100;
+	    print OUT "$line\t";
+	    print OUT "$QSS\t$vaf_normal\t$vaf_tumour\n";
+	    #expand the cancer field
+	}
+     }
   }
 
   close(OUT);
